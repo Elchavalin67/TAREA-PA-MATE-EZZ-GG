@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora múltiple</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    padding: 20px;
+    color: #1e293b;
+  }
+  main {
+    max-width: 950px;
+    margin: auto;
+    background: white;
+    padding: 24px;
+    border-radius: 14px;
+  }
+  h1 { color: #17458a; }
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 180px;
+    padding: 12px;
+    font: 15px monospace;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+  }
+  button {
+    padding: 12px 18px;
+    margin: 10px 5px 10px 0;
+    border: 0;
+    border-radius: 7px;
+    background: #245ac2;
+    color: white;
+    cursor: pointer;
+  }
+  .secundario { background: #475569; }
+  .tabla {
+    overflow-x: auto;
+    margin-top: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+  }
+  th, td {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px;
+    text-align: right;
+  }
+  th {
+    background: #eaf2ff;
+    color: #17458a;
+  }
+  th:first-child, td:first-child { text-align: center; }
+  .aumento { color: #15803d; }
+  .disminucion { color: #dc2626; }
+  #mensaje { color: #475569; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Calculadora para flojos(yo y tu xd)</h1>
+  <p>
+    Introduce una pareja de cantidades por columnas como el ejemplo:
+    <b>inicial;final</b>.
+  </p>
+  <p>
+    Ejemplo: <code>200;250</code><br>
+    También puedes copiar dos columnas de una pagina o cualquier otro              tipo.
+  </p>
+
+  <label for="datos"><b>Introduce tus cantidades(OJO no te olvides separarlo con comas, si no me enojare):</b></label>
+  <textarea id="datos"
+    placeholder="200;250&#10;500;450&#10;80;100"></textarea>
+
+  <div>
+    <button onclick="calcular()">Calcular cantidades</button>
+    <button class="secundario" onclick="descargar()">
+      Descargar resultados 
+    </button>
+    <button class="secundario" onclick="limpiar()">
+      Limpiar/borrar
+    </button>
+  </div>
+
+  <p id="mensaje" aria-live="polite">
+    Todavía no se han calculado los resultados.
+  </p>
+
+  <div class="tabla">
+    <table>
+      <thead>
+        <tr>
+          <th>N.º</th>
+          <th>Inicial(2023)</th>
+          <th>Final(2024)</th>
+          <th>T o Unidades</th>
+          <th>Variación %</th>
+        </tr>
+      </thead>
+      <tbody id="resultados">
+        <tr>
+          <td colspan="5">Los resultados aparecerán aquí.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+let registros = [];
+
+function numero(texto) {
+  const limpio = texto.trim().replace(/\s/g, "");
+
+  // Admite decimales con punto o coma.
+  if (/^[+-]?\d+,\d+$/.test(limpio)) {
+    return Number(limpio.replace(",", "."));
+  }
+
+  if (/^[+-]?\d+(\.\d+)?$/.test(limpio)) {
+    return Number(limpio);
+  }
+
+  return NaN;
+}
+
+function formato(n) {
+  return n.toLocaleString("es-PE", {
+    maximumFractionDigits: 8
+  });
+}
+
+function calcular() {
+  const texto = document.getElementById("datos").value.trim();
+  const cuerpo = document.getElementById("resultados");
+  const mensaje = document.getElementById("mensaje");
+
+  registros = [];
+  cuerpo.innerHTML = "";
+
+  if (!texto) {
+    mensaje.textContent = "Introduce al menos una pareja de cantidades.";
+    return;
+  }
+
+  const lineas = texto.split(/\r?\n/);
+  let errores = 0;
+
+  lineas.forEach((linea, indice) => {
+    if (!linea.trim()) return;
+
+    // Excel usa tabulaciones. También se admite punto y coma.
+    let partes = linea.includes("\t")
+      ? linea.split("\t")
+      : linea.split(";");
+
+    // Admite CSV separado por coma si no hay otro separador.
+    if (partes.length === 1) {
+      partes = linea.split(",");
+    }
+
+    if (partes.length !== 2) {
+      errores++;
+      return;
+    }
+
+    const inicial = numero(partes[0]);
+    const final = numero(partes[1]);
+
+    if (!Number.isFinite(inicial) ||
+        !Number.isFinite(final)) {
+      errores++;
+      return;
+    }
+
+    const diferencia = final - inicial;
+    const variacion = inicial === 0
+      ? null
+      : (diferencia / inicial) * 100;
+
+    const registro = {
+      fila: indice + 1,
+      inicial,
+      final,
+      diferencia,
+      variacion
+    };
+
+    registros.push(registro);
+
+    const fila = document.createElement("tr");
+    const valores = [
+      registro.fila,
+      formato(inicial),
+      formato(final),
+      formato(diferencia),
+      variacion === null ? "No definida" : formato(variacion) + "%"
+    ];
+
+    valores.forEach((valor, i) => {
+      const celda = document.createElement("td");
+      celda.textContent = valor;
+
+      if (i === 4 && variacion !== null) {
+        celda.className = variacion > 0
+          ? "aumento"
+          : variacion < 0 ? "disminucion" : "";
+      }
+
+      fila.appendChild(celda);
+    });
+
+    cuerpo.appendChild(fila);
+  });
+
+  if (registros.length === 0) {
+    cuerpo.innerHTML =
+      '<tr><td colspan="5">OYE ESCRIBE BIEN *c enoja, revisa tus numeros pepa 😡.</td></tr>';
+  }
+
+  mensaje.textContent =
+    "Calculadas: " + registros.length +
+    " parejas. Filas con errores: " + errores + ".";
+}
+
+function descargar() {
+  if (registros.length === 0) {
+    alert("Primero calcula los resultados.");
+    return;
+  }
+
+  const filas = [
+    ["N", "Inicial", "Final", "Diferencia", "Variacion porcentual"],
+    ...registros.map(r => [
+      r.fila, r.inicial, r.final, r.diferencia,
+      r.variacion === null ? "No definida" : r.variacion
+    ])
+  ];
+
+  const csv = "\uFEFF" + filas.map(fila =>
+    fila.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(";")
+  ).join("\r\n");
+
+  const archivo = new Blob([csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(archivo);
+  enlace.download = "resultados.csv";
+  enlace.click();
+  URL.revokeObjectURL(enlace.href);
+}
+
+function limpiar() {
+  document.getElementById("datos").value = "";
+  document.getElementById("resultados").innerHTML =
+    '<tr><td colspan="5">Los resultados aparecerán aquí.</td></tr>';
+  document.getElementById("mensaje").textContent =
+    "Todavía no se han calculado los resultados.";
+  registros = [];
+}
+</script>
+</body>
+</html>
