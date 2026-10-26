@@ -97,11 +97,11 @@
     <table>
       <thead>
         <tr>
-          <th>N.º</th>
-          <th>Inicial(2023)</th>
-          <th>Final(2024)</th>
-          <th>T o Unidades</th>
-          <th>Variación %</th>
+          <th>2023</th>
+          <th>2024</th>
+          <th>VARIACIÓN %</th>
+          <th>DIFERENCIA (T)</th>
+          
         </tr>
       </thead>
       <tbody id="resultados">
@@ -184,31 +184,32 @@ function calcular() {
     const variacion = inicial === 0
       ? null
       : (diferencia / inicial) * 100;
+    
 
     const registro = {
       fila: indice + 1,
       inicial,
       final,
-      diferencia,
-      variacion
+      variacion,
+	diferencia
+      
     };
 
     registros.push(registro);
 
     const fila = document.createElement("tr");
     const valores = [
-      registro.fila,
       formato(inicial),
       formato(final),
-      formato(diferencia),
-      variacion === null ? "No definida" : formato(variacion) + "%"
+      variacion === null ? "No definida" : formato(variacion) + "%",
+      formato(diferencia)
     ];
 
     valores.forEach((valor, i) => {
       const celda = document.createElement("td");
       celda.textContent = valor;
 
-      if (i === 4 && variacion !== null) {
+      if (i === 3 && variacion !== null) {
         celda.className = variacion > 0
           ? "aumento"
           : variacion < 0 ? "disminucion" : "";
@@ -222,7 +223,7 @@ function calcular() {
 
   if (registros.length === 0) {
     cuerpo.innerHTML =
-      '<tr><td colspan="5">OYE ESCRIBE BIEN *c enoja, revisa tus numeros pepa 😡.</td></tr>';
+      '<tr><td colspan="4">Revisa los números introducidos.</td></tr>';
   }
 
   mensaje.textContent =
@@ -237,10 +238,11 @@ function descargar() {
   }
 
   const filas = [
-    ["N", "Inicial", "Final", "Diferencia", "Variacion porcentual"],
+    ["2023", "2024", "VARIACIÓN %", "DIFERENCIA (T)"],
     ...registros.map(r => [
-      r.fila, r.inicial, r.final, r.diferencia,
-      r.variacion === null ? "No definida" : r.variacion
+      r.inicial, r.final,
+      r.variacion === null ? "No definida" : r.variacion,
+      r.diferencia
     ])
   ];
 
@@ -262,7 +264,7 @@ function descargar() {
 function limpiar() {
   document.getElementById("datos").value = "";
   document.getElementById("resultados").innerHTML =
-    '<tr><td colspan="5">Los resultados aparecerán aquí.</td></tr>';
+    '<tr><td colspan="4">Los resultados aparecerán aquí.</td></tr>';
   document.getElementById("mensaje").textContent =
     "Todavía no se han calculado los resultados.";
   registros = [];
